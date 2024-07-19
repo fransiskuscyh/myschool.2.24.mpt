@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import customtkinter as ct
-
 import statistics as st
-
+import pymysql
+from dbConnect import *
 
 # dbApp = mainDB()
 # conn_dbApp, curr_dbApp = dbApp.connect()
@@ -14,6 +14,9 @@ class Kelas(ct.CTkFrame):
         self.curr = curr
         self.conn = conn
         self.font = ct.CTkFont(family='montserrat', size=17)
+        self.xonn = pymysql.connect(host='localhost', port=3306, user="root", password="", database="myschool",)
+        self.show = self.xonn.cursor()
+        self.show.execute("select * from kelas")
 
     def setup_uiKelas(self, masterss):
 
@@ -56,17 +59,25 @@ class Kelas(ct.CTkFrame):
         self.columns = ('nama', 'tingkat', 'wali', 'ketua', 'jumlah')
         self.table = ttk.Treeview(master=masterss, columns=self.columns, show='headings', height=1000)
         self.table.heading('nama', text='nama kelas')
-        self.table.column('nama', minwidth=0, width=185, stretch=False)
+        self.table.column('nama', minwidth=0, width=150, stretch=False)
         self.table.heading('tingkat', text='tingkat kelas')
-        self.table.column('tingkat', minwidth=0, width=185, stretch=False)
+        self.table.column('tingkat', minwidth=0, width=150, stretch=False)
         self.table.heading('wali', text='wali kelas')
-        self.table.column('wali', minwidth=0, width=185, stretch=False)
+        self.table.column('wali', minwidth=0, width=150, stretch=False)
         self.table.heading('ketua', text='ketua kelas')
-        self.table.column('ketua', minwidth=0, width=185, stretch=False)
+        self.table.column('ketua', minwidth=0, width=150, stretch=False)
         self.table.heading('jumlah', text='jumlah')
-        self.table.column('jumlah', minwidth=0, width=185, stretch=False)
+        self.table.column('jumlah', minwidth=0, width=150, stretch=False)
+        
+        i = 0
+        for ro in self.show:
+            self.table.insert("", i,text="", values=(ro[0], ro[1], ro[2], ro[3], ro[4],))
+            i = i + 1
+        self.table.pack()
 
-        self.table.place(x=50, y=350)
+        # self.table.place(x=50, y=350)
+        self.table.place(relx=0.05, rely=0.45)
+
 
         self.button_save = ct.CTkButton(master=masterss, height=42, width=144, text='SAVE', fg_color="orange",
                                         hover_color="blue", font=('montserrat', 17), command=self.save)
@@ -127,6 +138,7 @@ class Kelas(ct.CTkFrame):
         except:
             messagebox.showwarning("", "error while save")
             return
+
 
     def ubah_data(self):
         nama = str(self.entry_nama.get())
