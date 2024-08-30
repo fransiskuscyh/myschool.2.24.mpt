@@ -11,7 +11,8 @@ class Kelas(ct.CTkFrame):
         self.curr = curr
         self.conn = conn
         self.font = ct.CTkFont(family='montserrat', size=17)
-        self.xonn = pymysql.connect(host='localhost', port=3306, user="root", password="", database="myschool",)
+        # self.xonn = pymysql.connect(host='localhost', port=3306, user="root", password="", database="myschool",)
+        self.xonn = pymysql.connect(host='db-myschool.cpsu4lo0ktjr.us-east-1.rds.amazonaws.com', port=3306, user="root", password="root12345", database="myschool",)
         self.showkelas = self.xonn.cursor()
         self.showkelas.execute("select * from kelas")
         self.showjadwal = self.xonn.cursor()
@@ -67,12 +68,10 @@ class Kelas(ct.CTkFrame):
         self.table.column('ketua', minwidth=0, width=150, stretch=False)
         self.table.heading('jumlah', text='jumlah')
         self.table.column('jumlah', minwidth=0, width=160, stretch=False)
+        self.refresh()
 
-        i = 0
-        for ro in self.showkelas:
-            self.table.insert("", i,text="", values=(ro[0], ro[1], ro[2], ro[3], ro[4],))
-            i = i + 1
         self.table.pack()
+        self.table.bind("<ButtonRelease-1>", self.on_tree_select)
 
         # self.table.place(x=70, y=350)
         self.table.place(relx=0.05, rely=0.4)
@@ -86,8 +85,7 @@ class Kelas(ct.CTkFrame):
         self.button_save.place(x=655, y=40)
         self.button_edit.place(x=655, y=90)
         self.button_delete.place(x=655, y=140)
-
-
+        
     def setupuijadwalSiswa(self):
         self.columns = ('waktu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu')
         self.table = ttk.Treeview(columns=self.columns, show='headings', height=1000)
@@ -111,10 +109,30 @@ class Kelas(ct.CTkFrame):
             self.table.insert("", i,text="", values=(ro[0], ro[1], ro[2], ro[3], ro[4], ro[5], ro[6],))
             i = i + 1
         self.table.pack()
-
         self.table.place(relx=0.2, rely=0.3)
 
+    def on_tree_select(self, event):
+        selected_item = self.table.selection()
+        if selected_item:
+            item = self.table.item(selected_item)
+            values = item["values"]
+            self.entry_nama.delete(0, tk.END)
+            self.entry_nama.insert(0, values[0])
+            self.entry_tingkat.delete(0, tk.END) 
+            self.entry_tingkat.insert(0, values[1])
+            self.entry_wali.delete(0, tk.END)
+            self.entry_wali.insert(0, values[2])
+            self.entry_ketua.delete(0, tk.END)
+            self.entry_ketua.insert(0, values[3])
+            self.entry_jumlah.delete(0, tk.END)
+            self.entry_jumlah.insert(0, values[4])
 
+    def refresh(self):
+        i = 0
+        for ro in self.showkelas:
+            self.table.insert("", i,text="", values=(ro[0], ro[1], ro[2], ro[3], ro[4],))
+            i = i + 1
+    
     def read(self):
         self.curr.connection.ping()
         # sql = f"SELECT * FROM kelas ORDER BY 'nama_kelas' DESC"
@@ -124,14 +142,6 @@ class Kelas(ct.CTkFrame):
         self.conn.commit()
         self.conn.close()
         return results
-
-    def refreshTable(self):
-        for data in Kelas.get_children():
-            Kelas.delete(data)
-        for array in Kelas.read():
-            Kelas.insert(parent='', index='end', iid=array, text="", values=(array), tags="orow")
-        Kelas.tag_configure("orow", background="#FFF")
-        Kelas.pack()
 
     def save(self):
         nama = str(self.entry_nama.get())
@@ -156,7 +166,8 @@ class Kelas(ct.CTkFrame):
             else:
                 self.curr.connection.ping()
                 sql = f"INSERT INTO kelas (`nama_kelas`, `tingkat_kelas`, `wali_kelas`, `ketua_kelas`, `jumlah`) VALUES ('{nama}','{tingkat}','{wali}','{ketua}','{jumlah}')"
-                self.curr.execute(sql, )
+                self.curr.execute(sql)
+                messagebox.showwarning("", "Input Success")
             self.conn.commit()
             self.conn.close()
         except:

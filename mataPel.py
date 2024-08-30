@@ -2,24 +2,24 @@ import tkinter as tk
 import tkinter
 from tkinter import messagebox, ttk
 import customtkinter as ct
-
+import pymysql
 import statistics as st
 
 
-# dbApp = mainDB()
-# conn_dbApp, curr_dbApp = dbApp.connect()
-
-class mataPelajaran(ct.CTkFrame):
+class mataPelajaranPengurus(ct.CTkFrame):
     def __init__(self, curr, conn,master):
         super().__init__(master)
-
         self.curr = curr
         self.conn = conn
         self.font_mataPelajaran = ct.CTkFont(family='montserrat', size=17)
+        # self.xonn = pymysql.connect(host='localhost', port=3306, user="root", password="", database="myschool",)
+        self.xonn = pymysql.connect(host='db-myschool.cpsu4lo0ktjr.us-east-1.rds.amazonaws.com', port=3306, user="root", password="root12345", database="myschool",)
+        self.showMapel = self.xonn.cursor()
+        self.showMapel.execute("select * from mata_pelajaran")
 
     def setup_uimatapelajaranPengurus(self, masterss):
 
-        self.id = ct.CTkLabel(master=masterss, text="ID", anchor="e", justify="right", width=60,
+        self.id = ct.CTkLabel(master=masterss, text="Kode Kelas", anchor="e", justify="right", width=60,
                               font=self.font_mataPelajaran)
         self.mataPelajaran = ct.CTkLabel(master=masterss, text="Mata Pelajaran", anchor="e", justify="right", width=60,
                                          font=self.font_mataPelajaran)
@@ -45,12 +45,16 @@ class mataPelajaran(ct.CTkFrame):
 
         self.columns = ('id', 'mataPelajaran', 'pengajar')
         self.table = ttk.Treeview(master=masterss, columns=self.columns, show='headings', height=1000)
-        self.table.heading('id', text='ID')
+        self.table.heading('id', text='Kode Kelas')
         self.table.column('id', minwidth=0, width=150, stretch=False)
         self.table.heading('mataPelajaran', text='MataPelajaran')
         self.table.column('mataPelajaran', minwidth=0, width=250, stretch=False)
         self.table.heading('pengajar', text='Pengajar')
         self.table.column('pengajar', minwidth=0, width=250, stretch=False)
+        self.refreshTable()
+
+        self.table.pack()
+        self.table.bind("<ButtonRelease-1>", self.on_tree_select)
 
         self.table.place(relx=0.1, rely=0.35, anchor = tkinter.NW)
 
@@ -66,47 +70,6 @@ class mataPelajaran(ct.CTkFrame):
         self.button_delete.place(x=450, y=150)
         self.button_cariId.place(x=650, y=150)
 
-    def setup_uimatapelajaranSiswa(self, masterss):
-
-        self.id = ct.CTkLabel(master=masterss, text="ID", anchor="e", justify="right", width=60,
-                              font=self.font_mataPelajaran)
-        self.mataPelajaran = ct.CTkLabel(master=masterss, text="Mata Pelajaran", anchor="e", justify="right", width=60,
-                                         font=self.font_mataPelajaran)
-
-
-        self.id.place(x=50, y=45)
-        self.mataPelajaran.place(x=50, y=95)
-
-
-        self.id_var = tk.StringVar()
-        self.mataPelajaran_var = tk.StringVar()
-        self.pengajar_var = tk.StringVar()
-
-        self.entry_id = ct.CTkEntry(master=masterss, font=self.font_mataPelajaran, textvariable=self.id_var, width=400)
-        self.entry_id.place(x=200, y=45)
-        self.entry_mataPelajaran = ct.CTkEntry(master=masterss, font=self.font_mataPelajaran,
-                                               textvariable=self.mataPelajaran_var, width=400)
-        self.entry_mataPelajaran.place(x=200, y=95)
-
-
-        self.columns = ('id', 'mataPelajaran', 'pengajar')
-        self.table = ttk.Treeview(master=masterss, columns=self.columns, show='headings', height=1000)
-        self.table.heading('id', text='ID')
-        self.table.column('id', minwidth=0, width=150, stretch=False)
-        self.table.heading('mataPelajaran', text='MataPelajaran')
-        self.table.column('mataPelajaran', minwidth=0, width=250, stretch=False)
-        self.table.heading('pengajar', text='Pengajar')
-        self.table.column('pengajar', minwidth=0, width=250, stretch=False)
-
-        self.table.place(relx=0.1, rely=0.3, anchor = tkinter.NW)
-
-        self.button_cariMatPel = ct.CTkButton(master=masterss,height=42,width=170,text='Cari Mata Pelajaran', fg_color='orange',hover_color='blue',font=('montserrat', 17), command=lambda: self.cari_dataMatPel(self.entry_mataPelajaran.get()))
-        self.button_cariId = ct.CTkButton(master=masterss,height=42,width=170,text='Cari ID', fg_color='orange',hover_color='blue',font=('montserrat', 17), command=lambda: self.cari_data(self.entry_id.get()))
-        self.button_cariId.place(x=655, y=40)
-        self.button_cariMatPel.place(x=655, y=90)
-
-
-
     def read(self):
         self.curr.connection.ping()
         sql = f"SELECT * FROM mata_pelajaran"
@@ -115,13 +78,24 @@ class mataPelajaran(ct.CTkFrame):
         self.conn.commit()
         self.conn.close()
         return results
-
-    def refreshTable(self,value):
+    
+    def on_tree_select(self, event):
+        selected_item = self.table.selection()
+        if selected_item:
+            item = self.table.item(selected_item)
+            values = item["values"]
+            self.entry_id.delete(0, tk.END)
+            self.entry_id.insert(0, values[0])
+            self.entry_mataPelajaran.delete(0, tk.END) 
+            self.entry_mataPelajaran.insert(0, values[1])
+            self.entry_pengajar.delete(0, tk.END) 
+            self.entry_pengajar.insert(0, values[2])
+            
+    def refreshTable(self,):
         for data in self.table.get_children():
             self.table.delete(data)
-        for x in value:
+        for x in self.showMapel:
             self.table.insert('', tkinter.END, values=x[0:])
-
 
     def save(self):
         id = str(self.entry_id.get())
@@ -145,6 +119,7 @@ class mataPelajaran(ct.CTkFrame):
                 self.curr.connection.ping()
                 sql = f"INSERT INTO mata_pelajaran (`id`, `mataPelajaran`, `pengajar`) VALUES ('{id}','{matapelajaran}','{pengajar}')"
                 self.curr.execute(sql, )
+                messagebox.showwarning("", "Input Success!")
             self.conn.commit()
             self.conn.close()
         except:
@@ -173,6 +148,7 @@ class mataPelajaran(ct.CTkFrame):
                 self.curr.connection.ping()
                 sql = f"UPDATE mata_pelajaran SET 'mataPelajaran' = '{matapelajaran}', 'pengajar' = '{pengajar}'')"
                 self.curr.execute(sql, )
+                messagebox.showwarning("", "Edit Success!")
             self.conn.commit()
             self.conn.close()
         except:
@@ -201,6 +177,7 @@ class mataPelajaran(ct.CTkFrame):
                 self.curr.connection.ping()
                 sql = f"DELETE FROM `mata_pelajaran` WHERE `id` = '{id}'"
                 self.curr.execute(sql, )
+                messagebox.showwarning("", "Delete Success!")
             self.conn.commit()
             self.conn.close()
         except:

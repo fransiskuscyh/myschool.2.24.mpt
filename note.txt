@@ -1,0 +1,91 @@
+BUAT FORM INPUT YANG JOIN INPUT ADA
+- TABLE KELAS (UNTUK HUBUNGIN DATA KE MENU SHOW JADWAL KELAS)
+- TABLE DATA_SISWA (UNTUK NAMPILIN DESCRIBE SETELAH LOGIN)
+- TABLE USER_ACCOUNT (UNTUK USERNAME DAN PASSWORD LOGIN SISWA)
+DIGABUNG JADI SATU AGAR SEKALI INPUT DATA SAMA!
+
+JADWAL PELAJARAN PERLU DI BUAT INNER JOIN JUGA AGAR TERHUBUNG SESUAI KELAS
+DATANYA!
+
+cth insert ke 2 table sekali klik
+import tkinter as tk
+from tkinter import ttk, messagebox
+import mysql.connector
+from mysql.connector import Error
+
+def save_treeview_to_mysql(treeview, table_name, cursor):
+    for child in treeview.get_children():
+        values = treeview.item(child)["values"]
+        placeholders = ', '.join(['%s'] * len(values))
+        query = f"INSERT INTO {table_name} VALUES ({placeholders})"
+        cursor.execute(query, values)
+
+def save_all_data():
+    try:
+        connection = mysql.connector.connect(
+            host='localhost',
+            database='your_database',
+            user='your_username',
+            password='your_password'
+        )
+
+        if connection.is_connected():
+            cursor = connection.cursor()
+
+            # Save data from treeview1 to table1
+            save_treeview_to_mysql(treeview1, 'table1', cursor)
+
+            # Save data from treeview2 to table2
+            save_treeview_to_mysql(treeview2, 'table2', cursor)
+
+            connection.commit()
+            messagebox.showinfo("Success", "Data has been saved to MySQL database successfully.")
+    
+    except Error as e:
+        messagebox.showerror("Error", f"Error: {e}")
+    
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+# Membuat jendela utama
+root = tk.Tk()
+root.title("Contoh Treeview dengan Menu Save")
+
+# Membuat Menu
+menu_bar = tk.Menu(root)
+root.config(menu=menu_bar)
+
+file_menu = tk.Menu(menu_bar, tearoff=0)
+menu_bar.add_cascade(label="File", menu=file_menu)
+file_menu.add_command(label="Save", command=save_all_data)
+
+# Membuat Treeview pertama
+treeview1 = ttk.Treeview(root)
+treeview1["columns"] = ("one", "two")
+treeview1.column("#0", width=100, minwidth=25)
+treeview1.column("one", width=100, minwidth=25)
+treeview1.column("two", width=100, minwidth=25)
+treeview1.heading("#0", text="Name", anchor=tk.W)
+treeview1.heading("one", text="Column 1", anchor=tk.W)
+treeview1.heading("two", text="Column 2", anchor=tk.W)
+treeview1.insert("", "end", text="Item 1", values=("Value 1", "Value 2"))
+treeview1.insert("", "end", text="Item 2", values=("Value 3", "Value 4"))
+treeview1.pack(pady=20)
+
+# Membuat Treeview kedua
+treeview2 = ttk.Treeview(root)
+treeview2["columns"] = ("one", "two")
+treeview2.column("#0", width=100, minwidth=25)
+treeview2.column("one", width=100, minwidth=25)
+treeview2.column("two", width=100, minwidth=25)
+treeview2.heading("#0", text="Name", anchor=tk.W)
+treeview2.heading("one", text="Column 1", anchor=tk.W)
+treeview2.heading("two", text="Column 2", anchor=tk.W)
+treeview2.insert("", "end", text="Item A", values=("Value A1", "Value A2"))
+treeview2.insert("", "end", text="Item B", values=("Value B1", "Value B2"))
+treeview2.pack(pady=20)
+
+# Menjalankan aplikasi
+root.mainloop()
